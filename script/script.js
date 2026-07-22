@@ -1,58 +1,55 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // Set current year in footer dynamically
+  // 1. Dynamic Year Setter
   const yearEl = document.getElementById('year');
   if (yearEl) {
     yearEl.textContent = new Date().getFullYear();
   }
 
-  // Dark / Light Theme Toggle Logic
+  // 2. Dark / Light Theme Toggle with Memory
   const themeToggleBtn = document.getElementById('theme-toggle');
   const icon = themeToggleBtn.querySelector('i');
 
-  // Check saved theme or system preference
-  const savedTheme = localStorage.getItem('theme');
+  const setScheme = (theme) => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('pref-theme', theme);
+    icon.className = theme === 'light' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+  };
+
+  // Check saved setting or system dark mode default
+  const savedTheme = localStorage.getItem('pref-theme');
   if (savedTheme) {
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    updateToggleIcon(savedTheme);
+    setScheme(savedTheme);
+  } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+    setScheme('light');
   }
 
   themeToggleBtn.addEventListener('click', () => {
     const currentTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-    updateToggleIcon(newTheme);
+    setScheme(currentTheme === 'light' ? 'dark' : 'light');
   });
 
-  function updateToggleIcon(theme) {
-    if (theme === 'light') {
-      icon.className = 'fa-solid fa-sun';
-    } else {
-      icon.className = 'fa-solid fa-moon';
-    }
-  }
+  // 3. Scroll Active Link Highlighting
+  const sections = document.querySelectorAll('section[id]');
+  const navItems = document.querySelectorAll('.nav-links .nav-item');
 
-  // Smooth Active Link Indicator on Scroll
-  const sections = document.querySelectorAll('section, header');
-  const navLinks = document.querySelectorAll('.nav-links a');
+  const highlightNavOnScroll = () => {
+    const scrollY = window.pageYOffset;
 
-  window.addEventListener('scroll', () => {
-    let currentSection = '';
+    sections.forEach(current => {
+      const sectionHeight = current.offsetHeight;
+      const sectionTop = current.offsetTop - 150;
+      const sectionId = current.getAttribute('id');
 
-    sections.forEach((section) => {
-      const sectionTop = section.offsetTop;
-      const sectionHeight = section.clientHeight;
-      if (window.scrollY >= sectionTop - 150) {
-        currentSection = section.getAttribute('id');
+      if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
+        navItems.forEach(item => {
+          item.classList.remove('active');
+          if (item.getAttribute('href') === `#${sectionId}`) {
+            item.classList.add('active');
+          }
+        });
       }
     });
+  };
 
-    navLinks.forEach((link) => {
-      link.classList.remove('active');
-      if (link.getAttribute('href') === `#${currentSection}`) {
-        link.classList.add('active');
-      }
-    });
-  });
+  window.addEventListener('scroll', highlightNavOnScroll);
 });
